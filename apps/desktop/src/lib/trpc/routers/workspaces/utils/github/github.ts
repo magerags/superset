@@ -2,6 +2,7 @@ import type { GitHubStatus, PullRequestComment } from "@superset/local-db";
 import {
 	branchExistsOnRemote,
 	getCurrentBranch,
+	getDefaultBranch,
 	isUnbornHeadError,
 } from "../git";
 import { execGitWithShellPath } from "../git-client";
@@ -114,6 +115,25 @@ async function refreshGitHubPRStatus(
 			branchOverride?.trim() || (await getCurrentBranch(worktreePath));
 		if (!branchName) {
 			return null;
+		}
+
+		// Skip PR lookup on the default branch — there's no PR from main→main,
+		// and gh will match unrelated PRs from other forks.
+		if (branchOverride) {
+			const defaultBranch = await getDefaultBranch(worktreePath).catch(
+				() => null,
+			);
+			if (defaultBranch && branchName === defaultBranch) {
+				return {
+					pr: null,
+					repoUrl: repoContext.repoUrl,
+					upstreamUrl: repoContext.upstreamUrl,
+					isFork: repoContext.isFork,
+					branchExistsOnRemote: true,
+					previewUrl: undefined,
+					lastRefreshed: Date.now(),
+				};
+			}
 		}
 
 		const revParseTarget = branchOverride ? `refs/heads/${branchName}` : "HEAD";

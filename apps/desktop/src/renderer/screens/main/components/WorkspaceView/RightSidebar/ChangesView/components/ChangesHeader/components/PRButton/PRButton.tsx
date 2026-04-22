@@ -65,7 +65,9 @@ export function PRButton({
 
 	if (isLoading) {
 		return (
-			<VscLoading className="w-4 h-4 animate-spin text-muted-foreground" />
+			<span className="flex items-center ml-auto">
+				<VscLoading className="w-4 h-4 animate-spin text-muted-foreground" />
+			</span>
 		);
 	}
 
